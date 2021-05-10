@@ -36,6 +36,18 @@ W = (bandwidth/2) / fn;
 yI = filter(b,a,(2 * y_bp .* transpose(cos(2 * pi * fc * t_lp ))));
 yQ = filter(b,a,(2 * y_bp .* transpose(-sin(2 * pi * fc * t_lp))));
 
+% Here we have that
+% yI = xI(t)*cos(delta) + xQ(t)sin(delta) 
+% yQ = -xI(t)*sin(delta) + xQ(t)*cos(delta)
+%where delta is phase shift in radians. If delta = 0 they would be exact
+%teh same, but they are not since channel and filters timeshift.
+
+%We have that (according to exercise 2.13
+% xI = yI*cos(delta) - yQ*sin(delta)
+% xQ = yI*sin(delta) + yQ*cos(delta)
+% Where delta is the same phaseshift.
+
+%so to get the real xI and xQ, we need delta. 
 %----------------------- Find tau and compensate--------------------------
 
 % Generate chirp-signal
@@ -45,8 +57,13 @@ epsilon = 10;    %Chirp-rate
 chirp = cos(2*pi*f0*(1+(epsilon.*t1)).*t1);
 
 % Korskorrelera yI och yQ med chirp
-[R_I, lagsI] = xcorr(chirp, yI);
-[R_Q, lagsQ] = xcorr(chirp, yQ);
+[R_I, lagsI] = xcorr(yI, chirp);
+[R_Q, lagsQ] = xcorr(yQ, chirp);
+
+% DEBG
+% stem(lagsI, R_I)
+% stem(lagsQ, R_Q)
+% https://web.mit.edu/6.02/www/f2006/handouts/Lec9.pdf
 
 %Bra med chirp, hittar exakt en topp i lags.
 % Se föreläsning  + Hans anteckningar, han visar hur man kompenserar för
@@ -54,25 +71,30 @@ chirp = cos(2*pi*f0*(1+(epsilon.*t1)).*t1);
 % och lags för att ta fram tau, sedan A med norm. 
 
 % Find peaks
-peaks_I = findpeaks(R_I);
-[V,I] = max(abs(R_I))
-a = lagsI(I)
-tau = a * Ts;
+%peaks_I = findpeaks(R_I);
+[V_I,Index_I] = max(abs(R_I))
+[V_Q,Index_Q] = max(abs(R_Q))
 
+a = lagsI(Index_I)
+b = lagsQ(Index_Q)  %Detta blir 184 och 183 men kan ej vara rätt ty det är bara 83 och 84 nollor i början.
+phase_shift = abs(a-b)
 
-peaks_Q = findpeaks(R_Q);
+tau = 83 * Ts
+
+%peaks_I = findpeaks(R_I);
+%peaks_Q = findpeaks(R_Q);
 
 % Find maxpeak
-max_peak_I = max(peaks_I);
-max_peak_Q = max(peaks_Q);
+%max_peak_I = max(peaks_I);
+%max_peak_Q = max(peaks_Q);
 
 % Find index for maxpeak (which corresponds to our delay)
-tau_I = find(abs(R_I) == max_peak_I)
-tau_Q = find(abs(R_Q) == max_peak_Q);
-tau = tau_I * Ts;
+%tau_I = find(abs(R_I) == max_peak_I);
+%tau_Q = find(abs(R_Q) == max_peak_Q);
+%tau = tau_I * Ts;
 
 % Compensate for tau + cut away chirp
-y_delay_comp = y(tau_I + length(chirp):end);
+y_delay_comp = y(a:end);
 %------------------------Find A and compensate-----------------------------
 
 % Find A
@@ -97,6 +119,7 @@ n = 100;                %According to task
 W = (bandwidth/2) / fn; 
 [b,a] = fir1(n,W,'low');
 
+% Denna modulering måste göras om enligt det som gjorts ovan. 
 % Demodulate and lowpass filter to avoid aliasing to the compensated version
 I_carry = transpose(cos(2 * pi * fc *t1 ));
 Q_carry = transpose(sin(2 * pi * fc *t1));
