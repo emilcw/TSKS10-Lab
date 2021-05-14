@@ -17,8 +17,8 @@ y = TSKS10channel(x);
 
 %Hämta ut ny signal och skalning samt fördröjning
 [zI,zQ,A,tau] = receiver(y);
-%A
-%tau
+A
+tau
 %figure(1)
 %plot(xI)
 %title('xI');

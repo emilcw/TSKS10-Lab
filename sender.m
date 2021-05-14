@@ -24,13 +24,13 @@ xQ_upsamp = upsample(xQ, sample_factor) * sample_factor;
 % Lowpass-filter to make it interpolate
 n_lp = 100; %According to task 
 W = (2 * bandwidth) / (fn);
-[b,a] = fir1(n,W,'low');
+[b,a] = fir1(n_lp,W,'low');
 xI_low = filter(b,a,xI_upsamp);
 xQ_low = filter(b,a,xQ_upsamp);
 
 %Compensate for filter delay
-xI_low = xI_low((n_lp/2):end);
-xQ_low = xQ_low((n_lp/2):end);
+%xI_low = xI_low((n_lp/2)+1:end);
+%xQ_low = xQ_low((n_lp/2)+1:end);
 
 %----------------------Apply pulseform ------------------------------------
 
