@@ -26,12 +26,12 @@ w2 = f2 / fn;       %Norm cutoff freq
 [b_bp,a_bp] = fir1(n_bp,[w1 w2],'bandpass');
 y_bp = filter(b_bp,a_bp,y);
 
-%Compensate for filter delay
+% Compensate for filter delay
 y_bp = y_bp((n_bp/2)+1:end);
 
 %--------------------Demodulate not compensated signal--------------------
 
-%Create Carriers
+% Create Carriers
 t1 = 0:Ts:(length(y_bp)*Ts)-Ts;  
 I_carry = transpose(cos(2 * pi * fc * t1 ));
 Q_carry = transpose(sin(2 * pi * fc * t1 ));
@@ -73,13 +73,14 @@ chirp_zeros = [chirp zeros_to_add];
 [V_I,Index_I] = max(abs(R_I));
 [V_Q,Index_Q] = max(abs(R_Q));
 
-%Determine the right tau, in other words the highest peak.
+% Determine the right tau, in other words the highest peak.
 if V_I >= V_Q
     tau_index = lagsI(Index_I);
 else
     tau_index = lagsQ(Index_Q);
 end
 
+% Convert tau_index to time in seconds.
 tau = tau_index * Ts;
 
 % Compensate for tau
@@ -93,7 +94,7 @@ n_low2 = 100;                %According to task
 W = (2 * bandwidth) / fn; 
 [b_low2,a_low2] = fir1(n_low2,W,'low');
 
-%Create carries
+% Create carries
 I_carry = transpose(cos(2 * pi * fc * t2 ));
 Q_carry = transpose(sin(2 * pi * fc * t2));
 
@@ -105,7 +106,7 @@ zQ_demod = 2 * z .* Q_carry;
 zI_low = filter(b_low2,a_low2,zI_demod);
 zQ_low = -filter(b_low2,a_low2,zQ_demod);
 
-%Compensate for filter delay
+% Compensate for filter delay
 zI_low = zI_low((n_low2/2)+1:end);
 zQ_low = zQ_low((n_low2/2)+1:end);
 
@@ -125,7 +126,7 @@ zQ_no_zeros = zQ_low(length(chirp_zeros)+1:end);
 zI_no_chirp = (1/A) * (zI_no_chirp);
 zQ_no_zeros = (1/A) * (zQ_no_zeros);
 
-%Downsample zI and zQ (Lowpass filtering done above to interpolate)
+% Downsample zI and zQ (Lowpass filtering done above to interpolate)
 sample_factor = 20;
 zI_downsampled = downsample(zI_no_chirp, sample_factor);
 zQ_downsampled = downsample(zQ_no_zeros, sample_factor);

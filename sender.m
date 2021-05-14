@@ -36,7 +36,7 @@ xQ_low = xQ_low((n_low/2)+1:end);
 
 %----------------------Apply pulseform ------------------------------------
 
-%Generate chirp-signal
+% Generate chirp-signal
 t1 = 0:Ts:1-Ts;
 f0 = 1;          %Start frequency
 epsilon = 10;    %Chirp-rate
@@ -52,7 +52,7 @@ xQ_with_zeros = [zeros(length(chirp),1); xQ_low];
 
 %------------------Generate signal to send via I/Q-------------------------
 
-%I/Q - modulation (5 second signal, 1 second chirp)
+% I/Q - modulation (5 second signal, 1 second chirp)
 t2 = 0:Ts:(length(xI_with_chirp))* Ts - Ts;
 I_carry = transpose(cos(2*pi*fc*t2));
 Q_carry = transpose(-sin(2*pi*fc*t2));
