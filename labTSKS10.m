@@ -19,13 +19,21 @@ y = TSKS10channel(x);
 [zI,zQ,A,tau] = receiver(y);
 %A
 %tau
-sizeXI = size(xI)
-%sizeXQ = size(xQ)
-sizeZI = size(zI)
-%sizeZQ = size(zQ)
+%figure(1)
+%plot(xI)
+%title('xI');
+%figure(2)
+%plot(zI)
+%title('zI')
+%figure(3)
+%plot(xQ)
+%title('xQ')
+%figure(4)
+%plot(zQ)
+%title('zQ')
 
 % Spela upp ny signal
-%soundsc(zI, fs);
+%soundsc(zI, fs)
 %soundsc(zQ, fs);
 
 % Kontroll av utsignal, svar bör vara minst 25 db

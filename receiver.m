@@ -24,30 +24,33 @@ w2 = f2 / fn;       %Norm cutoff freq
 [b_bp,a_bp] = fir1(n_bp,[w1 w2],'bandpass');
 y_bp = filter(b_bp,a_bp,y);
 
+%Compensate for filter delay
+y_bp = y_bp((n_bp/2)+1:end);
+
 %--------------------Demodulate not compensated signal--------------------
 
 % Create lowpass-filter
 t_lp = 0:Ts:(length(y_bp)/fs)-Ts;   % Changed to match y_bp with carriers
-n = 100;                            %According to task 
+n_lp = 100;                            % According to task 
 W = (bandwidth/2) / fn; 
-[b,a] = fir1(n,W,'low');
+[b_lp,a_lp] = fir1(n_lp, W,'low');
+
+%Create Carriers
+I_carry = transpose(cos(2 * pi * fc * t_lp ));
+Q_carry = transpose(sin(2 * pi * fc * t_lp ));
+
+% Create functions to be demodulated
+yI_before = 2 * y_bp .* I_carry;
+yQ_before = 2 * y_bp .* Q_carry;
 
 % Demodulate and lowpass filter to avoid aliasing
-yI = filter(b,a,(2 * y_bp .* transpose(cos(2 * pi * fc * t_lp ))));
-yQ = filter(b,a,(2 * y_bp .* transpose(-sin(2 * pi * fc * t_lp))));
+yI = filter(b_lp,a_lp, yI_before);
+yQ = -filter(b_lp,a_lp,yQ_before);
 
-% Here we have that
-% yI = xI(t)*cos(delta) + xQ(t)sin(delta) 
-% yQ = -xI(t)*sin(delta) + xQ(t)*cos(delta)
-%where delta is phase shift in radians. If delta = 0 they would be exact
-%teh same, but they are not since channel and filters timeshift.
+% Compensate for filter delay
+yI = yI((n_lp/2):end);
+yQ = yQ((n_lp/2):end);
 
-%We have that (according to exercise 2.13
-% xI = yI*cos(delta) - yQ*sin(delta)
-% xQ = yI*sin(delta) + yQ*cos(delta)
-% Where delta is the same phaseshift.
-
-%so to get the real xI and xQ, we need delta. 
 %----------------------- Find tau and compensate--------------------------
 
 % Generate chirp-signal
@@ -60,75 +63,82 @@ chirp = cos(2*pi*f0*(1+(epsilon.*t1)).*t1);
 [R_I, lagsI] = xcorr(yI, chirp);
 [R_Q, lagsQ] = xcorr(yQ, chirp);
 
-% DEBG
-% stem(lagsI, R_I)
-% stem(lagsQ, R_Q)
-% https://web.mit.edu/6.02/www/f2006/handouts/Lec9.pdf
-
-%Bra med chirp, hittar exakt en topp i lags.
-% Se föreläsning  + Hans anteckningar, han visar hur man kompenserar för
-% fasskift. Detta måste läggas in i cos och sin också! Annars använd peaks
-% och lags för att ta fram tau, sedan A med norm. 
-
 % Find peaks
-%peaks_I = findpeaks(R_I);
-[V_I,Index_I] = max(abs(R_I))
-[V_Q,Index_Q] = max(abs(R_Q))
+[V_I,Index_I] = max(abs(R_I));
+[V_Q,Index_Q] = max(abs(R_Q));
 
-a = lagsI(Index_I)
-b = lagsQ(Index_Q)  %Detta blir 184 och 183 men kan ej vara rätt ty det är bara 83 och 84 nollor i början.
-phase_shift = abs(a-b)
+% Find tau
+tau_I = lagsI(Index_I)
+tau_Q = lagsQ(Index_Q)
+tau = tau_I * Ts;
 
-tau = 83 * Ts
+figure(5)
+plot(yI)
+title('not comp')
 
-%peaks_I = findpeaks(R_I);
-%peaks_Q = findpeaks(R_Q);
+% Compensate for tau
+y_comp_tau = y_bp((tau_I+1):end); % y where tau is compensated
 
-% Find maxpeak
-%max_peak_I = max(peaks_I);
-%max_peak_Q = max(peaks_Q);
+figure(6)
+plot(y_comp_tau)
+title('comp')
 
-% Find index for maxpeak (which corresponds to our delay)
-%tau_I = find(abs(R_I) == max_peak_I);
-%tau_Q = find(abs(R_Q) == max_peak_Q);
-%tau = tau_I * Ts;
-
-% Compensate for tau + cut away chirp
-y_delay_comp = y(a:end);
 %------------------------Find A and compensate-----------------------------
 
 % Find A
-R_chirp = xcorr(y_delay_comp);
-A = norm(R_chirp);
+R_C = xcorr(chirp, y_comp_tau); 
+cor_top = norm(R_C);            % top of correlation
+chirp_energy = norm(chirp)^2;
+A = cor_top / chirp_energy;
 
 % Compensate for A
-z = (1/A) * (y_delay_comp);
+z = (1/A) * (y_comp_tau);
+
+% Cut away chirp
+%z = z(length(chirp)+1:end);
 
 % ----------------------Demodulate compensated version---------------------
 
 % Filter out compensated version
-n = 100;        %According to task 
-w1 = f1 / fn;   %Norm cutoff freq
-w2 = f2 / fn;   %Norm cutoff freq
-[b,a] = fir1(n,[w1 w2],'bandpass');
-z_bp = filter(b,a,z);
+%n_bp = 100;        %According to task 
+%w1 = f1 / fn;   %Norm cutoff freq
+%w2 = f2 / fn;   %Norm cutoff freq
+%[b,a] = fir1(n,[w1 w2],'bandpass');
+%z_bp = filter(b,a,z);
+
+% Compensate for filter delay
+%z_bp = z_bp((n_bp/2)+1:end);
 
 % Create lowpass-filter
-t1 = 0:Ts:6+0.025-Ts;   % Added 10000/400000 to compensate for phaseshift.
+t1 = 0:Ts:(length(z)/fs)-Ts;
 n = 100;                %According to task 
 W = (bandwidth/2) / fn; 
 [b,a] = fir1(n,W,'low');
 
-% Denna modulering måste göras om enligt det som gjorts ovan. 
 % Demodulate and lowpass filter to avoid aliasing to the compensated version
+
+%Create carries
 I_carry = transpose(cos(2 * pi * fc *t1 ));
 Q_carry = transpose(sin(2 * pi * fc *t1));
-I_carry_index = I_carry(abs(tau_I + length(chirp)):end);
-Q_carry_index = Q_carry(abs(tau_I + length(chirp)):end);
-zI_demod = filter(b,a,(2 * z_bp .* I_carry_index));
-zQ_demod = -filter(b,a,(2* z_bp .* Q_carry_index));
+
+% LP filter before downsample
+zI_demod = filter(b,a,(2 * z .* I_carry));
+zQ_demod = -filter(b,a,(2* z .* Q_carry));
+
+%Compensate for filter delay
+zI_demod = zI_demod((n_lp/2):end);
+zQ_demod = zQ_demod((n_lp/2):end);
+
+%Get the real values
+%delta = tau;
+%zI_demod = zI_demod*cos(delta) + zQ_demod*sin(delta);
+%zQ_demod = zI_demod*sin(delta) + zQ_demod*cos(delta);
 
 %Downsample zI and zQ
 sample_factor = 20;
 zI = downsample(zI_demod, sample_factor);
 zQ = downsample(zQ_demod, sample_factor);
+
+zI = zI(1:100000);
+zQ = zQ(1:100000);
+end
