@@ -4,7 +4,6 @@
 % hjälpfunktioner i andra filer för att lösa
 % uppgiften. 
 
-
 %Tilldelning av audiosignaler
 [xI,fs] = audioread('xI.wav');
 [xQ,fs] = audioread('xQ.wav');
@@ -17,20 +16,9 @@ y = TSKS10channel(x);
 
 %Hämta ut ny signal och skalning samt fördröjning
 [zI,zQ,A,tau] = receiver(y);
-A
-tau
-%figure(1)
-%plot(xI)
-%title('xI');
-%figure(2)
-%plot(zI)
-%title('zI')
-%figure(3)
-%plot(xQ)
-%title('xQ')
-%figure(4)
-%plot(zQ)
-%title('zQ')
+
+AMPLITUDE = A
+DELAY = tau
 
 % Spela upp ny signal
 %soundsc(zI, fs)
