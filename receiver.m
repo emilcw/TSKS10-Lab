@@ -14,7 +14,8 @@ f2 = 105e3;
 fc = (f1 + f2) / 2;
 bandwidth = 5e3;
 fs = 400e3;
-fn = fs / 2;
+fs_orginal = 20e3;
+fn = fs / 2; % Nyquist freq
 Ts = 1/fs;
 signal_length = 100000;
 
@@ -114,7 +115,7 @@ zQ_low = zQ_low((n_low2/2)+1:end);
 
 % Find A
 R_C = xcorr(chirp_zeros, zI_low); 
-correlation_max = max(abs(R_C));           
+correlation_max = max(abs(R_C));  
 chirp_energy = norm(chirp_zeros)^2;
 A = correlation_max / chirp_energy;
 
@@ -127,7 +128,7 @@ zI_no_chirp = (1/A) * (zI_no_chirp);
 zQ_no_zeros = (1/A) * (zQ_no_zeros);
 
 % Downsample zI and zQ (Lowpass filtering done above to interpolate)
-sample_factor = 20;
+sample_factor = fs/fs_orginal;
 zI_downsampled = downsample(zI_no_chirp, sample_factor);
 zQ_downsampled = downsample(zQ_no_zeros, sample_factor);
 

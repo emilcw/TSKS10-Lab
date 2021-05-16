@@ -12,10 +12,11 @@ f1 = 85e3;
 f2 = 105e3;
 bandwidth = 5e3;
 fs = 400e3;
+fs_orginal = 20e3;
 fn = fs / 2;
 Ts = 1/fs;
 fc = (f1 + f2) / 2;
-sample_factor = 20;
+sample_factor = fs / fs_orginal;
 
 %------------------------ Upsample to 400kHz-------------------------------
 

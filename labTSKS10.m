@@ -17,14 +17,14 @@ y = TSKS10channel(x);
 %Hämta ut ny signal och skalning samt fördröjning
 [zI,zQ,A,tau] = receiver(y);
 
-AMPLITUDE = A
-DELAY = tau
+%AMPLITUDE = A
+%DELAY = tau
 
 % Spela upp ny signal
 %soundsc(zI, fs)
 %soundsc(zQ, fs);
 
 % Kontroll av utsignal, svar bör vara minst 25 db
-SNRzI = 20*log10(norm(xI)/norm(zI-xI))
-SNRzQ = 20*log10(norm(xQ)/norm(zQ-xQ))
+%SNRzI = 20*log10(norm(xI)/norm(zI-xI))
+%SNRzQ = 20*log10(norm(xQ)/norm(zQ-xQ))
 
